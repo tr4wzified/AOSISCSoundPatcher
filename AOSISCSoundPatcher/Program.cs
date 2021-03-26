@@ -11,7 +11,6 @@ namespace AOSISCSoundPatcher
 {
     public class Program
     {
-        [Obsolete]
         public static async Task<int> Main(string[] args)
         {
             return await SynthesisPipeline.Instance
@@ -25,6 +24,9 @@ namespace AOSISCSoundPatcher
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
+            if (!state.LoadOrder.ContainsKey(ImmersiveSoundsCompendium) && !state.LoadOrder.ContainsKey(AudioOverhaulSkyrim))
+                throw new Exception("This patcher won't function without either Immersive Sounds Compendium or Audio Overhaul Skyrim! Either don't use this patcher or use one of the above mods to let it function.");
+
             if (state.LoadOrder.ContainsKey(ImmersiveSoundsCompendium))
             {
                 Console.WriteLine("Detected Immersive Sounds Compendium.");
@@ -39,64 +41,55 @@ namespace AOSISCSoundPatcher
 
                 foreach (var armor in state.LoadOrder.PriorityOrder.Armor().WinningOverrides())
                 {
-                    if (armor.Keywords != null)
+                    if (armor.Keywords == null) continue;
+
+                    if (armor.Keywords.Contains(Skyrim.Keyword.ClothingRing) && armor.PickUpSound != ringLink.AsNullable())
                     {
-                        bool modified = false;
                         var armorCopy = armor.DeepCopy();
-
-                        if (armor.Keywords.Contains(Skyrim.Keyword.ClothingRing))
-                        {
-                            armorCopy.PickUpSound.SetTo(ringLink);
-                            modified = true;
-                        }
-
-                        else if (armor.Keywords.Contains(Skyrim.Keyword.ClothingNecklace))
-                        {
-                            armorCopy.PickUpSound.SetTo(neckUpLink);
-                            armorCopy.PutDownSound.SetTo(neckDownLink);
-                            modified = true;
-                        }
-
-                        if (modified) state.PatchMod.Armors.Set(armorCopy);
+                        armorCopy.PickUpSound.SetTo(ringLink);
+                        state.PatchMod.Armors.Set(armorCopy);
+                    }
+                    else if (armor.Keywords.Contains(Skyrim.Keyword.ClothingNecklace) && (armor.PickUpSound.FormKey != neckUpLink.FormKey || armor.PutDownSound.FormKey != neckDownLink.FormKey))
+                    {
+                        var armorCopy = armor.DeepCopy();
+                        armorCopy.PickUpSound.SetTo(neckUpLink);
+                        armorCopy.PutDownSound.SetTo(neckDownLink);
+                        state.PatchMod.Armors.Set(armorCopy);
                     }
                 }
 
                 foreach (var weapon in state.LoadOrder.PriorityOrder.Weapon().WinningOverrides())
                 {
-                    if (weapon.Keywords != null)
+                    if (weapon.Keywords == null) continue;
+
+                    if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeBattleaxe))
                     {
-                        bool modified = false;
+                        if (weapon.Data != null && weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon) && weapon.AttackFailSound.FormKey != swingBoundAxeLink.FormKey)
+                        {
+                            var weaponCopy = weapon.DeepCopy();
+                            weaponCopy.AttackFailSound.SetTo(swingBoundAxeLink);
+                            state.PatchMod.Weapons.Set(weaponCopy);
+                        }
+                        else if (weapon.AttackFailSound.FormKey != swingAxeLink.FormKey)
+                        {
+                            var weaponCopy = weapon.DeepCopy();
+                            weaponCopy.AttackFailSound.SetTo(swingAxeLink);
+                            state.PatchMod.Weapons.Set(weaponCopy);
+                        }
+                    }
+
+                    else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeWarhammer) && weapon.AttackFailSound.FormKey != swingBluntLink.FormKey)
+                    {
                         var weaponCopy = weapon.DeepCopy();
+                        weaponCopy.AttackFailSound.SetTo(swingBluntLink);
+                        state.PatchMod.Weapons.Set(weaponCopy);
+                    }
 
-                        if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeBattleaxe))
-                        {
-                            if (weapon.Data != null)
-                            {
-                                if (weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon))
-                                {
-                                    weaponCopy.AttackFailSound.SetTo(swingBoundAxeLink);
-                                    modified = true;
-                                }
-                                else
-                                {
-                                    weaponCopy.AttackFailSound.SetTo(swingAxeLink);
-                                    modified = true;
-                                }
-                            }
-                        }
-                        else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeWarhammer))
-                        {
-                            weaponCopy.AttackFailSound.SetTo(swingBluntLink);
-                            modified = true;
-                        }
-
-                        else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeSword) && weapon.Data != null && weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon))
-                        {
-                            weaponCopy.AttackFailSound.SetTo(swingBladeLink);
-                            modified = true;
-                        }
-
-                        if (modified) state.PatchMod.Weapons.Set(weaponCopy);
+                    else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeSword) && weapon.Data != null && weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon) && weapon.AttackFailSound.FormKey != swingBladeLink.FormKey)
+                    {
+                        var weaponCopy = weapon.DeepCopy();
+                        weaponCopy.AttackFailSound.SetTo(swingBladeLink);
+                        state.PatchMod.Weapons.Set(weaponCopy);
                     }
                 }
             }
@@ -109,16 +102,15 @@ namespace AOSISCSoundPatcher
 
                 foreach (var weapon in state.LoadOrder.PriorityOrder.Weapon().WinningOverrides())
                 {
-                    if (weapon.Keywords != null)
+                    if (weapon.Keywords == null) continue;
+
+                    if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeDagger) && weapon.Data != null && !weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon) && (weapon.ImpactDataSet.FormKey != smallImpactLink.FormKey || weapon.EquipSound.FormKey != Skyrim.SoundDescriptor.WPNBlade1HandSmallDrawSD.FormKey || weapon.UnequipSound.FormKey != Skyrim.SoundDescriptor.WPNBlade1HandSmallSheatheSD.FormKey))
                     {
-                        if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeDagger) && weapon.Data != null && !weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon))
-                        {
-                            var weaponCopy = weapon.DeepCopy();
-                            weaponCopy.ImpactDataSet.SetTo(smallImpactLink);
-                            weaponCopy.EquipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallDrawSD);
-                            weaponCopy.UnequipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallSheatheSD);
-                            state.PatchMod.Weapons.Set(weaponCopy);
-                        }
+                        var weaponCopy = weapon.DeepCopy();
+                        weaponCopy.ImpactDataSet.SetTo(smallImpactLink);
+                        weaponCopy.EquipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallDrawSD);
+                        weaponCopy.UnequipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallSheatheSD);
+                        state.PatchMod.Weapons.Set(weaponCopy);
                     }
                 }
             }
