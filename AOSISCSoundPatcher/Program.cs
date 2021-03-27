@@ -43,7 +43,7 @@ namespace AOSISCSoundPatcher
                 {
                     if (armor.Keywords == null) continue;
 
-                    if (armor.Keywords.Contains(Skyrim.Keyword.ClothingRing) && armor.PickUpSound != ringLink.AsNullable())
+                    if (armor.Keywords.Contains(Skyrim.Keyword.ClothingRing) && armor.PickUpSound.FormKey != ringLink.FormKey)
                     {
                         var armorCopy = armor.DeepCopy();
                         armorCopy.PickUpSound.SetTo(ringLink);
