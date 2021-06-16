@@ -19,98 +19,106 @@ namespace AOSISCSoundPatcher
                 .Run(args);
         }
 
-        private readonly static ModKey ImmersiveSoundsCompendium = ModKey.FromNameAndExtension("Immersive Sounds - Compendium.esp");
-        private readonly static ModKey AudioOverhaulSkyrim = ModKey.FromNameAndExtension("Audio Overhaul Skyrim.esp");
-
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
-            if (!state.LoadOrder.ContainsKey(ImmersiveSoundsCompendium) && !state.LoadOrder.ContainsKey(AudioOverhaulSkyrim))
+            bool iscActive = state.LoadOrder.ContainsKey(ImmersiveSoundsCompendium.ModKey);
+            bool aosActive = state.LoadOrder.ContainsKey(AudioOverhaulSkyrim.ModKey);
+
+            if (!iscActive && !aosActive)
                 throw new Exception("This patcher won't function without either Immersive Sounds Compendium or Audio Overhaul Skyrim! Either don't use this patcher or use one of the above mods to let it function.");
 
-            if (state.LoadOrder.ContainsKey(ImmersiveSoundsCompendium))
+
+            if (iscActive)
             {
                 Console.WriteLine("Detected Immersive Sounds Compendium.");
 
-                var ringLink = new FormLink<ISoundDescriptorGetter>(ImmersiveSoundsCompendium.MakeFormKey(0x08AB14));
-                var neckUpLink = new FormLink<ISoundDescriptorGetter>(ImmersiveSoundsCompendium.MakeFormKey(0x08AB15));
-                var neckDownLink = new FormLink<ISoundDescriptorGetter>(ImmersiveSoundsCompendium.MakeFormKey(0x08AB16));
-                var swingAxeLink = new FormLink<ISoundDescriptorGetter>(ImmersiveSoundsCompendium.MakeFormKey(0x1E6B31));
-                var swingBoundAxeLink = new FormLink<ISoundDescriptorGetter>(ImmersiveSoundsCompendium.MakeFormKey(0x04C731));
-                var swingBluntLink = new FormLink<ISoundDescriptorGetter>(ImmersiveSoundsCompendium.MakeFormKey(0x1F5E3B));
-                var swingBladeLink = new FormLink<ISoundDescriptorGetter>(ImmersiveSoundsCompendium.MakeFormKey(0x04762F));
 
+                // Patch Rings (pick up sound) & Necklaces equip and unequip sound
                 foreach (var armor in state.LoadOrder.PriorityOrder.Armor().WinningOverrides())
                 {
                     if (armor.Keywords == null) continue;
 
-                    if (armor.Keywords.Contains(Skyrim.Keyword.ClothingRing) && armor.PickUpSound.FormKey != ringLink.FormKey)
+                    var armorCopy = armor.DeepCopy();
+
+                    if (armor.Keywords.Contains(Skyrim.Keyword.ClothingRing))
                     {
-                        var armorCopy = armor.DeepCopy();
-                        armorCopy.PickUpSound.SetTo(ringLink);
-                        state.PatchMod.Armors.Set(armorCopy);
+                        armorCopy.PickUpSound.SetTo(ImmersiveSoundsCompendium.ITMRingUp);
                     }
-                    else if (armor.Keywords.Contains(Skyrim.Keyword.ClothingNecklace) && (armor.PickUpSound.FormKey != neckUpLink.FormKey || armor.PutDownSound.FormKey != neckDownLink.FormKey))
+                    else if (armor.Keywords.Contains(Skyrim.Keyword.ClothingNecklace))
                     {
-                        var armorCopy = armor.DeepCopy();
-                        armorCopy.PickUpSound.SetTo(neckUpLink);
-                        armorCopy.PutDownSound.SetTo(neckDownLink);
-                        state.PatchMod.Armors.Set(armorCopy);
+                        armorCopy.PickUpSound.SetTo(ImmersiveSoundsCompendium.ITMNeckUp);
+                        armorCopy.PutDownSound.SetTo(ImmersiveSoundsCompendium.ITMNeckDown);
                     }
+
+                    if (armorCopy.PickUpSound.FormKey != armor.PickUpSound.FormKey || armorCopy.PutDownSound.FormKey != armorCopy.PutDownSound.FormKey)
+                        state.PatchMod.Armors.Set(armorCopy);
                 }
 
                 foreach (var weapon in state.LoadOrder.PriorityOrder.Weapon().WinningOverrides())
                 {
                     if (weapon.Keywords == null) continue;
+
+                    var weaponCopy = weapon.DeepCopy();
+
+                    if (aosActive)
+                    {
+
+                        if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeDagger) && weapon.Data != null && !weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon))
+                        {
+                            weaponCopy.ImpactDataSet.SetTo(AudioOverhaulSkyrim.WPNzBlade1HandSmallImpactSet);
+                            weaponCopy.EquipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallDrawSD);
+                            weaponCopy.UnequipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallSheatheSD);
+                        }
+
+                        var changed = weapon.ImpactDataSet.FormKey != weaponCopy.ImpactDataSet.FormKey || weapon.EquipSound.FormKey != weaponCopy.EquipSound.FormKey || weapon.UnequipSound.FormKey != weaponCopy.UnequipSound.FormKey;
+
+                        if (changed)
+                            state.PatchMod.Weapons.Set(weaponCopy);
+                    }
 
                     if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeBattleaxe))
                     {
-                        if (weapon.Data != null && weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon) && weapon.AttackFailSound.FormKey != swingBoundAxeLink.FormKey)
+                        if (weapon.Data?.Flags.HasFlag(WeaponData.Flag.BoundWeapon) ?? false)
                         {
-                            var weaponCopy = weapon.DeepCopy();
-                            weaponCopy.AttackFailSound.SetTo(swingBoundAxeLink);
-                            state.PatchMod.Weapons.Set(weaponCopy);
+                            weaponCopy.AttackFailSound.SetTo(ImmersiveSoundsCompendium.WPNSwing2HandBound);
                         }
-                        else if (weapon.AttackFailSound.FormKey != swingAxeLink.FormKey)
+                        else
                         {
-                            var weaponCopy = weapon.DeepCopy();
-                            weaponCopy.AttackFailSound.SetTo(swingAxeLink);
-                            state.PatchMod.Weapons.Set(weaponCopy);
+                            weaponCopy.AttackFailSound.SetTo(ImmersiveSoundsCompendium.WPNSwingAxe2Hand);
                         }
+
                     }
 
-                    else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeWarhammer) && weapon.AttackFailSound.FormKey != swingBluntLink.FormKey)
+                    else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeWarhammer))
                     {
-                        var weaponCopy = weapon.DeepCopy();
-                        weaponCopy.AttackFailSound.SetTo(swingBluntLink);
+                        weaponCopy.AttackFailSound.SetTo(ImmersiveSoundsCompendium.WPNSwingBlunt2Hand);
+                    }
+
+                    else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeSword) && weapon.Data != null && weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon))
+                    {
+                        weaponCopy.AttackFailSound.SetTo(ImmersiveSoundsCompendium.WPNSwingBladeMediumBoundSD);
+                    }
+
+                    if (weapon.AttackFailSound.FormKey != weaponCopy.AttackFailSound.FormKey ||
+                        weapon.ImpactDataSet.FormKey != weaponCopy.ImpactDataSet.FormKey ||
+                        weapon.EquipSound.FormKey != weaponCopy.EquipSound.FormKey ||
+                        weapon.UnequipSound.FormKey != weaponCopy.UnequipSound.FormKey)
+                    {
                         state.PatchMod.Weapons.Set(weaponCopy);
                     }
 
-                    else if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeSword) && weapon.Data != null && weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon) && weapon.AttackFailSound.FormKey != swingBladeLink.FormKey)
-                    {
-                        var weaponCopy = weapon.DeepCopy();
-                        weaponCopy.AttackFailSound.SetTo(swingBladeLink);
-                        state.PatchMod.Weapons.Set(weaponCopy);
-                    }
                 }
-            }
 
-            if (state.LoadOrder.ContainsKey(AudioOverhaulSkyrim))
-            {
-                Console.WriteLine("Detected Audio Overhaul Skyrim.");
-
-                var smallImpactLink = new FormLink<IImpactDataSetGetter>(AudioOverhaulSkyrim.MakeFormKey(0x05B6EA));
-
-                foreach (var weapon in state.LoadOrder.PriorityOrder.Weapon().WinningOverrides())
+                foreach (var soulGem in state.LoadOrder.PriorityOrder.SoulGem().WinningOverrides())
                 {
-                    if (weapon.Keywords == null) continue;
-
-                    if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeDagger) && weapon.Data != null && !weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon) && (weapon.ImpactDataSet.FormKey != smallImpactLink.FormKey || weapon.EquipSound.FormKey != Skyrim.SoundDescriptor.WPNBlade1HandSmallDrawSD.FormKey || weapon.UnequipSound.FormKey != Skyrim.SoundDescriptor.WPNBlade1HandSmallSheatheSD.FormKey))
+                    if (soulGem.Keywords?.Contains(Skyrim.Keyword.VendorItemSoulGem) ?? false)
                     {
-                        var weaponCopy = weapon.DeepCopy();
-                        weaponCopy.ImpactDataSet.SetTo(smallImpactLink);
-                        weaponCopy.EquipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallDrawSD);
-                        weaponCopy.UnequipSound.SetTo(Skyrim.SoundDescriptor.WPNBlade1HandSmallSheatheSD);
-                        state.PatchMod.Weapons.Set(weaponCopy);
+                        var soulGemCopy = soulGem.DeepCopy();
+                        soulGemCopy.PickUpSound.SetTo(ImmersiveSoundsCompendium.ITMGemUp);
+                        soulGemCopy.PutDownSound.SetTo(ImmersiveSoundsCompendium.ITMGemDown);
+
+                        if (soulGem.PickUpSound.FormKey != soulGemCopy.PickUpSound.FormKey || soulGem.PutDownSound.FormKey != soulGemCopy.PutDownSound.FormKey)
+                            state.PatchMod.SoulGems.Set(soulGemCopy);
                     }
                 }
             }
