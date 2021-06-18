@@ -37,8 +37,15 @@ namespace AOSISCSoundPatcher
         public static readonly Dictionary<FormKey, IFormLink<IExplosionGetter>> Explosions = new Dictionary<FormKey, IFormLink<IExplosionGetter>>()
         {
             { Skyrim.Explosion.AlduinFirestormImpactExplosion.FormKey, AudioOverhaulSkyrim.AlduinFirestormImpactExplosion },
+            { Skyrim.Explosion.DragonFireballAreaExplosion.FormKey, AudioOverhaulSkyrim.DragonFireballAreaExplosion_AOS },
             { Skyrim.Explosion.ExplosionDwarvenSpider.FormKey, AudioOverhaulSkyrim.ExplosionDwarvenSpider_AOS },
-            { Skyrim.Explosion.ExplosionShockMass01.FormKey, AudioOverhaulSkyrim.ExplosionShockMass01_AOS }
+            { Skyrim.Explosion.ExplosionShockMass01.FormKey, AudioOverhaulSkyrim.ExplosionShockMass01_AOS },
+            { Skyrim.Explosion.ExplosionStormAtronachPowerAttack.FormKey, AudioOverhaulSkyrim.ExplosionStormAtronachPowerAttack_AOS },
+            { Skyrim.Explosion.FXAtronachFireDeathExplosion.FormKey, AudioOverhaulSkyrim.FXAtronachFireDeathExplosion_AOS},
+            { Skyrim.Explosion.FireballStormAlduinDeathExplosion.FormKey, AudioOverhaulSkyrim.FireballStormAlduinDeathExplosion_AOS },
+            { Skyrim.Explosion.FireballStormImpactExplosion.FormKey, AudioOverhaulSkyrim.FireballStormImpactExplosion_AOS },
+            { Skyrim.Explosion.MAGIceSpikeVolleyExplosion.FormKey, AudioOverhaulSkyrim.MAGIceSpikeVolleyExplosion_AOS },
+            { Skyrim.Explosion.crGiantSlamExplosion.FormKey, AudioOverhaulSkyrim.crGiantSlamExplosionBIG },
         };
     }
 }

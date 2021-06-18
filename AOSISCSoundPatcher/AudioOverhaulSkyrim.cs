@@ -39,9 +39,16 @@ namespace AOSISCSoundPatcher
 
 
         // Explosions
-        public readonly static FormLink<IExplosionGetter> ExplosionDwarvenSpider_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x000840));
 
         public readonly static FormLink<IExplosionGetter> AlduinFirestormImpactExplosion = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x000844));
+        public readonly static FormLink<IExplosionGetter> ExplosionDwarvenSpider_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x000840));
         public readonly static FormLink<IExplosionGetter> ExplosionShockMass01_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x00083B));
+        public readonly static FormLink<IExplosionGetter> FireballStormAlduinDeathExplosion_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x00083F));
+        public readonly static FormLink<IExplosionGetter> MAGIceSpikeVolleyExplosion_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x00083C));
+        public readonly static FormLink<IExplosionGetter> crGiantSlamExplosionBIG = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x000841));
+        public readonly static IFormLink<IExplosionGetter> DragonFireballAreaExplosion_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x00083E));
+        public readonly static IFormLink<IExplosionGetter> ExplosionStormAtronachPowerAttack_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x000842));
+        public readonly static IFormLink<IExplosionGetter> FXAtronachFireDeathExplosion_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x000837));
+        public readonly static IFormLink<IExplosionGetter> FireballStormImpactExplosion_AOS = new FormLink<IExplosionGetter>(ModKey.MakeFormKey(0x00083D));
     }
 }
