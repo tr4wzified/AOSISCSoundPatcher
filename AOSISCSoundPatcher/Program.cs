@@ -121,6 +121,38 @@ namespace AOSISCSoundPatcher
                             state.PatchMod.SoulGems.Set(soulGemCopy);
                     }
                 }
+
+                foreach (var magicEffect in state.LoadOrder.PriorityOrder.MagicEffect().WinningOverrides())
+                {
+                    if (magicEffect.Projectile == null) continue;
+
+                    var magicEffectCopy = magicEffect.DeepCopy();
+
+                    if (Replacers.Projectiles.TryGetValue(magicEffect.Projectile.FormKey, out var replacerProjectile) && replacerProjectile != null)
+                        magicEffectCopy.Projectile.SetTo(replacerProjectile);
+
+                    if (Replacers.Explosions.TryGetValue(magicEffect.Explosion.FormKey, out var replacerExplosion) && replacerExplosion != null)
+                        magicEffectCopy.Explosion.SetTo(replacerExplosion);
+
+                    /*
+                    WIP - Replace explosion properties in scripts (dwarven spider summons) (reference formkey: 0004EFC6)
+                    foreach (var script in magicEffectCopy.VirtualMachineAdapter.Scripts)
+                    {
+                        foreach (var property in script.Properties)
+                        {
+                            property.
+                            foreach (var containedFormLink in property.ContainedFormLinks)
+                            {
+                                if (Replacers.Explosions.TryGetValue(containedFormLink.FormKey, out var replacerExplosion)
+                                    containedFormLink.
+                            }
+                        }
+                    }
+                    */
+
+                    if (magicEffect.Projectile.FormKey != magicEffectCopy.Projectile.FormKey || magicEffect.Explosion.FormKey != magicEffectCopy.Explosion.FormKey)
+                        state.PatchMod.MagicEffects.Set(magicEffectCopy);
+                }
             }
         }
     }
