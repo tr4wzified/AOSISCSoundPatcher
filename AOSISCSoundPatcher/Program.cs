@@ -27,11 +27,9 @@ namespace AOSISCSoundPatcher
             if (!iscActive && !aosActive)
                 throw new Exception("This patcher won't function without either Immersive Sounds Compendium or Audio Overhaul Skyrim! Either don't use this patcher or use one of the above mods to let it function.");
 
-
             if (iscActive)
             {
                 Console.WriteLine("Detected Immersive Sounds Compendium.");
-
 
                 // Patch Rings (pick up sound) & Necklaces equip and unequip sound
                 foreach (var armor in state.LoadOrder.PriorityOrder.Armor().WinningOverrides())
@@ -50,7 +48,7 @@ namespace AOSISCSoundPatcher
                         armorCopy.PutDownSound.SetTo(ImmersiveSoundsCompendium.ITMNeckDown);
                     }
 
-                    if (armorCopy.PickUpSound.FormKey != armor.PickUpSound.FormKey || armorCopy.PutDownSound.FormKey != armorCopy.PutDownSound.FormKey)
+                    if (armor.PickUpSound.FormKey != armorCopy.PickUpSound.FormKey || armor.PutDownSound.FormKey != armorCopy.PutDownSound.FormKey)
                         state.PatchMod.Armors.Set(armorCopy);
                 }
 
@@ -62,6 +60,7 @@ namespace AOSISCSoundPatcher
 
                     if (aosActive)
                     {
+                        Console.WriteLine("Detected Immersive Sounds Compendium.");
 
                         if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeDagger) && weapon.Data != null && !weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon))
                         {
@@ -128,27 +127,29 @@ namespace AOSISCSoundPatcher
 
                     var magicEffectCopy = magicEffect.DeepCopy();
 
-                    if (Replacers.Projectiles.TryGetValue(magicEffect.Projectile.FormKey, out var replacerProjectile) && replacerProjectile != null)
-                        magicEffectCopy.Projectile.SetTo(replacerProjectile);
-
-                    if (Replacers.Explosions.TryGetValue(magicEffect.Explosion.FormKey, out var replacerExplosion) && replacerExplosion != null)
-                        magicEffectCopy.Explosion.SetTo(replacerExplosion);
-
-                    /*
-                    WIP - Replace explosion properties in scripts (dwarven spider summons) (reference formkey: 0004EFC6)
-                    foreach (var script in magicEffectCopy.VirtualMachineAdapter.Scripts)
+                    if (aosActive)
                     {
-                        foreach (var property in script.Properties)
+                        if (Replacers.Projectiles.TryGetValue(magicEffect.Projectile.FormKey, out var replacerProjectile) && replacerProjectile != null)
+                            magicEffectCopy.Projectile.SetTo(replacerProjectile);
+
+                        if (Replacers.Explosions.TryGetValue(magicEffect.Explosion.FormKey, out var replacerExplosion) && replacerExplosion != null)
+                            magicEffectCopy.Explosion.SetTo(replacerExplosion);
+                        /*
+                        WIP - Replace explosion properties in scripts (dwarven spider summons) (reference formkey: 0004EFC6)
+                        foreach (var script in magicEffectCopy.VirtualMachineAdapter.Scripts)
                         {
-                            property.
-                            foreach (var containedFormLink in property.ContainedFormLinks)
+                            foreach (var property in script.Properties)
                             {
-                                if (Replacers.Explosions.TryGetValue(containedFormLink.FormKey, out var replacerExplosion)
-                                    containedFormLink.
+                                property.
+                                foreach (var containedFormLink in property.ContainedFormLinks)
+                                {
+                                    if (Replacers.Explosions.TryGetValue(containedFormLink.FormKey, out var replacerExplosion)
+                                        containedFormLink.
+                                }
                             }
                         }
+                        */
                     }
-                    */
 
                     if (magicEffect.Projectile.FormKey != magicEffectCopy.Projectile.FormKey || magicEffect.Explosion.FormKey != magicEffectCopy.Explosion.FormKey)
                         state.PatchMod.MagicEffects.Set(magicEffectCopy);
