@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Synthesis;
@@ -26,12 +25,14 @@ namespace AOSISCSoundPatcher
 
             if (!iscActive && !aosActive)
                 throw new Exception("This patcher won't function without either Immersive Sounds Compendium or Audio Overhaul Skyrim! Either don't use this patcher or use one of the above mods to let it function.");
+            if (iscActive)
+                Console.WriteLine("Detected Immersive Sounds Compendium.");
+            if (aosActive)
+                Console.WriteLine("Detected Audio Overhaul for Skyrim.");
 
             if (iscActive)
             {
-                Console.WriteLine("Detected Immersive Sounds Compendium.");
-
-                // Patch Rings (pick up sound) & Necklaces equip and unequip sound
+                // Patch Armor sounds, Rings (pick up sound) & Necklaces equip and unequip sounds.
                 foreach (var armor in state.LoadOrder.PriorityOrder.Armor().WinningOverrides())
                 {
                     if (armor.Keywords == null) continue;
@@ -47,11 +48,31 @@ namespace AOSISCSoundPatcher
                         armorCopy.PickUpSound.SetTo(ImmersiveSoundsCompendium.ITMNeckUp);
                         armorCopy.PutDownSound.SetTo(ImmersiveSoundsCompendium.ITMNeckDown);
                     }
+                    else if(armor.Keywords.Contains(Skyrim.Keyword.ArmorCuirass))
+                    {
+                        foreach(var keyword in armor.Keywords)
+                        {
+                            if(ImmersiveSoundsCompendium.FootstepSets.TryGetValue(keyword, out var armorSound))
+                            {
+                                foreach(var armorAddon in armor.Armature)
+                                {
+                                    var resolvedAddon = armorAddon.TryResolve(state.LinkCache);
+                                    if(resolvedAddon is not null && resolvedAddon.FootstepSound is null)
+                                    {
+                                        var addonCopy = resolvedAddon.DeepCopy();
+                                        addonCopy.FootstepSound.SetTo(armorSound);
+                                        state.PatchMod.ArmorAddons.Set(addonCopy);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     if (armor.PickUpSound.FormKey != armorCopy.PickUpSound.FormKey || armor.PutDownSound.FormKey != armorCopy.PutDownSound.FormKey)
                         state.PatchMod.Armors.Set(armorCopy);
                 }
 
+                // Patch weapon swing and impact sounds.
                 foreach (var weapon in state.LoadOrder.PriorityOrder.Weapon().WinningOverrides())
                 {
                     if (weapon.Keywords == null) continue;
@@ -60,8 +81,6 @@ namespace AOSISCSoundPatcher
 
                     if (aosActive)
                     {
-                        Console.WriteLine("Detected Immersive Sounds Compendium.");
-
                         if (weapon.Keywords.Contains(Skyrim.Keyword.WeapTypeDagger) && weapon.Data != null && !weapon.Data.Flags.HasFlag(WeaponData.Flag.BoundWeapon))
                         {
                             weaponCopy.ImpactDataSet.SetTo(AudioOverhaulSkyrim.WPNzBlade1HandSmallImpactSet);
@@ -108,6 +127,7 @@ namespace AOSISCSoundPatcher
 
                 }
 
+                // Path soul gem sounds.
                 foreach (var soulGem in state.LoadOrder.PriorityOrder.SoulGem().WinningOverrides())
                 {
                     if (soulGem.Keywords?.Contains(Skyrim.Keyword.VendorItemSoulGem) ?? false)
@@ -121,6 +141,7 @@ namespace AOSISCSoundPatcher
                     }
                 }
 
+                // Patch magic projectile and explosion sounds.
                 foreach (var magicEffect in state.LoadOrder.PriorityOrder.MagicEffect().WinningOverrides())
                 {
                     if (magicEffect.Projectile == null) continue;
@@ -129,10 +150,10 @@ namespace AOSISCSoundPatcher
 
                     if (aosActive)
                     {
-                        if (Replacers.Projectiles.TryGetValue(magicEffect.Projectile.FormKey, out var replacerProjectile) && replacerProjectile != null)
+                        if (AudioOverhaulSkyrim.Projectiles.TryGetValue(magicEffect.Projectile.FormKey, out var replacerProjectile) && replacerProjectile != null)
                             magicEffectCopy.Projectile.SetTo(replacerProjectile);
 
-                        if (Replacers.Explosions.TryGetValue(magicEffect.Explosion.FormKey, out var replacerExplosion) && replacerExplosion != null)
+                        if (AudioOverhaulSkyrim.Explosions.TryGetValue(magicEffect.Explosion.FormKey, out var replacerExplosion) && replacerExplosion != null)
                             magicEffectCopy.Explosion.SetTo(replacerExplosion);
                         /*
                         WIP - Replace explosion properties in scripts (dwarven spider summons) (reference formkey: 0004EFC6)
