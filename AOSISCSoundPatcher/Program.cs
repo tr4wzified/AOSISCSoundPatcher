@@ -57,7 +57,7 @@ namespace AOSISCSoundPatcher
                                 foreach(var armorAddon in armor.Armature)
                                 {
                                     var resolvedAddon = armorAddon.TryResolve(state.LinkCache);
-                                    if(resolvedAddon is not null && resolvedAddon.FootstepSound is null)
+                                    if(resolvedAddon is not null && resolvedAddon.FootstepSound.IsNull)
                                     {
                                         var addonCopy = resolvedAddon.DeepCopy();
                                         addonCopy.FootstepSound.SetTo(armorSound);
