@@ -39,7 +39,6 @@ namespace AOSISCSoundPatcher
                     try
                     {
                         if (armor.Keywords == null) continue;
-                        Console.WriteLine($"{armor.EditorID} ({armor.FormKey.ModKey})");
 
                         var armorCopy = armor.DeepCopy();
 
