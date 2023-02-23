@@ -85,6 +85,8 @@ namespace AOSISCSoundPatcher
                 {
                     try
                     {
+                        if (weapon.Template.IsNull)
+                        {
                         if (weapon.Keywords == null) continue;
 
                         var weaponCopy = weapon.DeepCopy();
@@ -134,7 +136,7 @@ namespace AOSISCSoundPatcher
                         {
                             state.PatchMod.Weapons.Set(weaponCopy);
                         }
-
+                        }
                     }
                     catch (Exception e)
                     {
